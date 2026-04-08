@@ -1,0 +1,77 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+print("Define Activation Function")
+
+def step_function(weighted_sum):
+    return 1 if weighted_sum >= 0 else 0
+
+print("Define Perceptron Class")
+
+class Perceptron:
+    def __init__(self, num_inputs, learning_rate=0.1, max_epochs=100):
+        self.weights = np.random.uniform(-0.5, 0.5, num_inputs)
+        self.bias = np.random.uniform(-0.5, 0.5)
+        self.learning_rate = learning_rate
+        self.max_epochs = max_epochs
+        self.errors = []
+
+    def predict(self, inputs):
+        weighted_sum = np.dot(inputs, self.weights) + self.bias
+        return step_function(weighted_sum)
+
+    def train(self, training_inputs, labels):
+        print("Training Perceptron")
+
+        for epoch in range(self.max_epochs):
+            total_error = 0
+
+            for inputs, label in zip(training_inputs, labels):
+                prediction = self.predict(inputs)
+                error = label - prediction
+                total_error += abs(error)
+
+                if error != 0:
+                    self.weights += self.learning_rate * error * inputs
+                    self.bias += self.learning_rate * error
+
+            self.errors.append(total_error)
+
+            if total_error == 0:
+                print(f"Converged at Epoch {epoch + 1}")
+                break
+
+        print("Training Complete")
+        print("Final Weights:", self.weights)
+        print("Final Bias:", self.bias)
+
+print("Prepare Training Data")
+
+X_train = np.array([
+    [0, 0],
+    [0, 1],
+    [1, 0],
+    [1, 1]
+])
+
+y_train = np.array([0, 0, 0, 1])
+
+print("Initialize and Train Model")
+
+perceptron = Perceptron(num_inputs=2, learning_rate=0.1, max_epochs=50)
+perceptron.train(X_train, y_train)
+
+print("Test Model")
+
+for inputs, expected in zip(X_train, y_train):
+    prediction = perceptron.predict(inputs)
+    print(f"Input: {inputs}, Predicted: {prediction}, Expected: {expected}")
+
+print("Plot Error Graph")
+
+plt.figure(figsize=(8, 4))
+plt.plot(perceptron.errors, marker='o')
+plt.xlabel('Epoch')
+plt.ylabel('Total Error')
+plt.grid(True)
+plt.show()

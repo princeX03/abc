@@ -1,0 +1,67 @@
+import numpy as np
+
+print("Define Membership Functions")
+
+def gaussmf(x, c, sigma):
+    return np.exp(-((x - c) ** 2) / (2 * sigma ** 2))
+
+print("Initialize ANFIS Parameters")
+
+np.random.seed(0)
+
+num_rules = 2
+learning_rate = 0.01
+epochs = 100
+
+centers = np.random.uniform(0, 1, num_rules)
+sigmas = np.random.uniform(0.1, 0.5, num_rules)
+
+p = np.random.uniform(-1, 1, num_rules)
+q = np.random.uniform(-1, 1, num_rules)
+r = np.random.uniform(-1, 1, num_rules)
+
+print("Prepare Training Data")
+
+X = np.linspace(0, 1, 50)
+Y = np.sin(2 * np.pi * X)
+
+print("Training ANFIS Model")
+
+for epoch in range(epochs):
+    total_error = 0
+
+    for x, y in zip(X, Y):
+        mu = np.array([gaussmf(x, centers[i], sigmas[i]) for i in range(num_rules)])
+        w = mu / np.sum(mu)
+
+        f = np.array([p[i]*x + q[i]*x + r[i] for i in range(num_rules)])
+        output = np.sum(w * f)
+
+        error = y - output
+        total_error += error**2
+
+        for i in range(num_rules):
+            p[i] += learning_rate * error * w[i] * x
+            q[i] += learning_rate * error * w[i] * x
+            r[i] += learning_rate * error * w[i]
+
+            centers[i] += learning_rate * error * w[i] * (x - centers[i])
+            sigmas[i] += learning_rate * error * w[i]
+
+    if (epoch + 1) % 20 == 0:
+        print(f"Epoch {epoch+1}, Error: {total_error:.4f}")
+
+print("Testing ANFIS Model")
+
+predictions = []
+for x in X:
+    mu = np.array([gaussmf(x, centers[i], sigmas[i]) for i in range(num_rules)])
+    w = mu / np.sum(mu)
+    f = np.array([p[i]*x + q[i]*x + r[i] for i in range(num_rules)])
+    output = np.sum(w * f)
+    predictions.append(output)
+
+print("Final Predictions")
+
+for i in range(5):
+    print(f"Input: {X[i]:.2f}, Predicted: {predictions[i]:.4f}, Actual: {Y[i]:.4f}")

@@ -1,0 +1,153 @@
+import numpy as np
+import random
+import matplotlib.pyplot as plt
+
+print("Define Distance Matrix")
+
+distance = np.array([
+    [0, 10, 15, 20],
+    [10, 0, 35, 25],
+    [15, 35, 0, 30],
+    [20, 25, 30, 0]
+])
+
+NUM_CITIES = 4
+POP_SIZE = 10
+GENERATIONS = 100
+MUTATION_RATE = 0.2
+
+print("Define Fitness Functions")
+
+def total_distance(tour):
+    return sum(distance[tour[i], tour[(i + 1) % NUM_CITIES]] for i in range(NUM_CITIES))
+
+def fitness(tour):
+    return 1 / total_distance(tour)
+
+print("Initialize Population")
+
+def create_population():
+    return [random.sample(range(NUM_CITIES), NUM_CITIES) for _ in range(POP_SIZE)]
+
+print("Selection Function")
+
+def selection(population):
+    a, b = random.sample(population, 2)
+    return a if fitness(a) > fitness(b) else b
+
+print("Crossover Function")
+
+def crossover(p1, p2):
+    start, end = sorted(random.sample(range(NUM_CITIES), 2))
+    child = [-1] * NUM_CITIES
+    child[start:end] = p1[start:end]
+
+    pointer = end
+    for city in p2:
+        if city not in child:
+            if pointer >= NUM_CITIES:
+                pointer = 0
+            child[pointer] = city
+            pointer += 1
+    return child
+
+print("Mutation Function")
+
+def mutation(tour):
+    if random.random() < MUTATION_RATE:
+        i, j = random.sample(range(NUM_CITIES), 2)
+        tour[i], tour[j] = tour[j], tour[i]
+    return tour
+
+print("Run GA for TSP")
+
+population = create_population()
+
+for _ in range(GENERATIONS):
+    new_population = []
+    for _ in range(POP_SIZE):
+        parent1 = selection(population)
+        parent2 = selection(population)
+        child = crossover(parent1, parent2)
+        child = mutation(child)
+        new_population.append(child)
+    population = new_population
+
+best_tour = min(population, key=total_distance)
+print("Best Tour:", best_tour)
+print("Minimum Distance:", total_distance(best_tour))
+
+
+print("Run Second TSP GA")
+
+dist = np.array([
+    [0, 2, 9, 10, 7],
+    [2, 0, 6, 4, 3],
+    [9, 6, 0, 8, 5],
+    [10, 4, 8, 0, 6],
+    [7, 3, 5, 6, 0]
+])
+
+NUM_CITIES = len(dist)
+POP_SIZE = 50
+GENERATIONS = 200
+MUTATION_RATE = 0.2
+
+def total_distance2(route):
+    return sum(dist[route[i], route[i+1]] for i in range(NUM_CITIES-1)) + dist[route[-1], route[0]]
+
+def fitness2(route):
+    return 1 / total_distance2(route)
+
+def init_population():
+    return [random.sample(range(NUM_CITIES), NUM_CITIES) for _ in range(POP_SIZE)]
+
+def selection2(pop):
+    k = 3
+    selected = random.sample(pop, k)
+    return max(selected, key=fitness2)
+
+def crossover2(p1, p2):
+    a, b = sorted(random.sample(range(NUM_CITIES), 2))
+    child = [-1] * NUM_CITIES
+    child[a:b] = p1[a:b]
+
+    ptr = b
+    for city in p2:
+        if city not in child:
+            if ptr == NUM_CITIES:
+                ptr = 0
+            child[ptr] = city
+            ptr += 1
+    return child
+
+def mutate2(route):
+    if random.random() < MUTATION_RATE:
+        i, j = random.sample(range(NUM_CITIES), 2)
+        route[i], route[j] = route[j], route[i]
+    return route
+
+population = init_population()
+best_dist = []
+
+for _ in range(GENERATIONS):
+    new_pop = []
+    for _ in range(POP_SIZE):
+        p1 = selection2(population)
+        p2 = selection2(population)
+        child = crossover2(p1, p2)
+        child = mutate2(child)
+        new_pop.append(child)
+    population = new_pop
+
+    best_route = min(population, key=total_distance2)
+    best_dist.append(total_distance2(best_route))
+
+print("Best Route:", best_route)
+print("Minimum Distance:", total_distance2(best_route))
+
+plt.plot(best_dist)
+plt.xlabel("Generations")
+plt.ylabel("Distance")
+plt.grid()
+plt.show()

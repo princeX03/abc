@@ -1,0 +1,129 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import random
+
+print("Define Fitness Function")
+
+def fitness_function(x):
+    return x * np.sin(10 * np.pi * x) + 1
+
+print("Initialize Parameters")
+
+POP_SIZE = 40
+GENERATIONS = 100
+X_MIN, X_MAX = -1.0, 2.0
+CROSSOVER_PROB = 0.9
+MUTATION_PROB = 0.2
+MUTATION_STD = 0.1
+
+np.random.seed(42)
+population = np.random.uniform(X_MIN, X_MAX, POP_SIZE)
+
+print("Selection Function")
+
+def tournament_selection(pop, fitness, k=3):
+    selected = []
+    for _ in range(len(pop)):
+        idx = np.random.choice(len(pop), k, replace=False)
+        selected.append(pop[idx[np.argmax(fitness[idx])]])
+    return np.array(selected)
+
+print("Crossover Function")
+
+def arithmetic_crossover(p1, p2):
+    alpha = np.random.rand()
+    return alpha * p1 + (1 - alpha) * p2, alpha * p2 + (1 - alpha) * p1
+
+print("Mutation Function")
+
+def mutate(x):
+    if np.random.rand() < MUTATION_PROB:
+        x += np.random.normal(0, MUTATION_STD)
+    return np.clip(x, X_MIN, X_MAX)
+
+print("Run Genetic Algorithm")
+
+best_history = []
+mean_history = []
+
+for _ in range(GENERATIONS):
+    fitness = fitness_function(population)
+
+    best_history.append(np.max(fitness))
+    mean_history.append(np.mean(fitness))
+
+    parents = tournament_selection(population, fitness)
+
+    offspring = []
+    np.random.shuffle(parents)
+
+    for i in range(0, POP_SIZE, 2):
+        if np.random.rand() < CROSSOVER_PROB:
+            c1, c2 = arithmetic_crossover(parents[i], parents[i + 1])
+        else:
+            c1, c2 = parents[i], parents[i + 1]
+
+        offspring.extend([mutate(c1), mutate(c2)])
+
+    population = np.array(offspring)
+
+print("Plot Fitness Graph")
+
+plt.figure()
+plt.plot(best_history, label="Best Fitness")
+plt.plot(mean_history, label="Mean Fitness")
+plt.legend()
+plt.grid()
+plt.show()
+
+print("Plot Final Population")
+
+x = np.linspace(X_MIN, X_MAX, 500)
+plt.figure()
+plt.plot(x, fitness_function(x))
+plt.scatter(population, fitness_function(population))
+plt.grid()
+plt.show()
+
+
+print("Run Second GA")
+
+def fitness(x):
+    return x * x
+
+def initialize_population(size):
+    return [random.uniform(-10, 10) for _ in range(size)]
+
+def selection(population):
+    a, b = random.sample(population, 2)
+    return a if fitness(a) < fitness(b) else b
+
+def crossover(parent1, parent2):
+    alpha = random.random()
+    return alpha * parent1 + (1 - alpha) * parent2
+
+def mutation(child, rate=0.1):
+    if random.random() < rate:
+        child += random.uniform(-1, 1)
+    return child
+
+def genetic_algorithm():
+    population_size = 20
+    generations = 50
+    population = initialize_population(population_size)
+
+    for _ in range(generations):
+        new_population = []
+        for _ in range(population_size):
+            p1 = selection(population)
+            p2 = selection(population)
+            child = crossover(p1, p2)
+            child = mutation(child)
+            new_population.append(child)
+        population = new_population
+
+    best = min(population, key=fitness)
+    print("Best solution:", best)
+    print("Minimum value:", fitness(best))
+
+genetic_algorithm()
